@@ -27,15 +27,6 @@ namespace SpaceShip.Scripts.Pool
 
         private void AddTaskToPool<T>(T prefab, out PoolTask poolTask) where T : Component, IPoolable
         {
-            var taskContainer = new GameObject()
-            {
-                name = prefab.name + "_pool",
-                transform =
-                {
-                    localScale = Vector2.one
-                }
-            };
-
             poolTask = new PoolTask(Container);
             _activePoolTask.Add(prefab, poolTask);
         }

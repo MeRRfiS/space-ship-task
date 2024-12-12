@@ -1,3 +1,4 @@
+using SpaceShip.Scripts.Constants;
 using SpaceShip.Scripts.Pool;
 using UnityEngine;
 using Zenject;
@@ -6,12 +7,12 @@ namespace SpaceShip.Scripts.Player
 {
     public class PlayerShooting : MonoBehaviour
     {
-        [SerializeField] private float _frequency = 0.5f;
         [SerializeField] private Transform _firePoint;
         [SerializeField] private Transform _container;
         [SerializeField] private Projectile _projectilePrefab;
 
         private float _timer;
+        private float _frequency;
 
         private ObjectPool _objectPool;
 
@@ -21,6 +22,11 @@ namespace SpaceShip.Scripts.Player
             _objectPool = objectPool;
 
             _objectPool.Container = _container;
+        }
+
+        private void Start()
+        {
+            _frequency = PlayerPrefs.GetFloat(PlayerPrefsKeys.ShootFreqyencyKey);
         }
 
         private void Update()

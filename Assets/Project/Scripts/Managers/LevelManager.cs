@@ -1,41 +1,101 @@
+using SpaceShip.Scripts.Constants;
+using SpaceShip.Scripts.Data;
+using SpaceShip.Scripts.Interfaces;
 using SpaceShip.Scripts.Level;
 using SpaceShip.Scripts.Pool;
 using UnityEngine;
+using UnityEngine.Events;
 using Zenject;
 
 namespace SpaceShip.Scripts.Managers
 {
     public class LevelManager : MonoBehaviour
     {
-        [SerializeField] private float _frequency = 1f;
-        [SerializeField] private Transform _minSpawnPosition;
-        [SerializeField] private Transform _maxSpawnPosition;
-        [SerializeField] private Transform _container;
-        [SerializeField] private Stone _stonePrefab;
+        [SerializeField] private AsteroidSpawner _spawner;
 
-        private float _timer;
+        [Header("End Game Events")]
+        [SerializeField] private UnityEvent OnWinGame;
+        [SerializeField] private UnityEvent OnLoseGame;
 
-        private ObjectPool _objectPool;
+        [Header("UI Events")]
+        [SerializeField] private UnityEvent<int> OnUpdateScore;
+        [SerializeField] private UnityEvent<int> OnDestroyAsteroid;
+
+        private bool _isLevelEnd = false;
+        private int _score;
+        private int _asteroidAmount;
+        private float _gameTime;
+
+        private ISaveManager _saveManager;
 
         [Inject]
-        private void Constructor(ObjectPool objectPool)
+        private void Constructor(ISaveManager saveManager)
         {
-            _objectPool = objectPool;
+            _saveManager = saveManager;
+        }
 
-            _objectPool.Container = _container;
+        private void Start()
+        {
+            _asteroidAmount = PlayerPrefs.GetInt(PlayerPrefsKeys.AsteroidAmountKey);
         }
 
         private void Update()
         {
-            _timer += Time.deltaTime;
+            if(!_isLevelEnd) _spawner.SpawnAsteroid(UpdateScore, DestroyAsteroid);
+            Timer();
+        }
 
-            if (_timer < _frequency) return;
+        private void UpdateScore()
+        {
+            _score++;
+            OnUpdateScore?.Invoke(_score);
+        }
 
-            var stone = _objectPool.GetObject(_stonePrefab);
-            stone.transform.position = new Vector2(Random.Range(_minSpawnPosition.position.x, _maxSpawnPosition.position.x),
-                                                   _minSpawnPosition.position.y);
+        private void DestroyAsteroid()
+        {
+            _asteroidAmount--;
+            OnDestroyAsteroid?.Invoke(_score);
 
-            _timer = 0f;
+            if (_asteroidAmount > 0) return;
+
+            WinGame();
+        }
+
+        private void WinGame()
+        {
+            _isLevelEnd = true;
+            OnWinGame?.Invoke();
+
+            SaveLevel(true);
+        }
+
+        public void LoseGame()
+        {
+            _isLevelEnd = true;
+            OnLoseGame?.Invoke();
+
+            SaveLevel(false);
+        }
+
+        private void Timer()
+        {
+            if (_isLevelEnd) return;
+
+            _gameTime += Time.deltaTime;
+        }
+
+        private void SaveLevel(bool isWin)
+        {
+            ResultData result = new ResultData()
+            {
+                Level = PlayerPrefs.GetInt(PlayerPrefsKeys.LevelKey),
+                Time = Mathf.RoundToInt(_gameTime),
+                Score = _score,
+                IsWin = isWin
+            };
+
+            LevelData.Instance.AddResult(result);
+            _saveManager.Save();
         }
     }
 }
