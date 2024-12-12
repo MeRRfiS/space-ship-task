@@ -1,1 +1,0 @@
-C:\odlD\Disk_D\My Programs\space-ship-task\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\build\intermediates\cxx\RelWithDebInfo\64454c6l\obj\arm64-v8a
